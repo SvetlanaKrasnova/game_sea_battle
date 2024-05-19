@@ -2,7 +2,7 @@ import random
 from src.dot import Dot
 from src.ship import Ship
 from src.board import Board
-from src.players.AI import AI
+from src.players.ai import AI
 from src.players.player import User
 from exceptions.exceptions import *
 
@@ -140,7 +140,8 @@ class Game:
 
         self.ai.own_board.hid = False
         self.print_board(user_board=self.user.own_board.current_game_board(),
-                         ai_board=self.ai.own_board.current_game_board())
+                         ai_board=self.ai.own_board.current_game_board(),
+                         finish=True)
         print('\nИГРА ОКОНЧЕНА!')
 
     def _finish(self):
@@ -158,7 +159,7 @@ class Game:
             return True
         return False
 
-    def print_board(self, user_board: list, ai_board: list):
+    def print_board(self, user_board: list, ai_board: list, finish: bool = False):
         """
         Метод печатает текущий результат игры
         Формат:
@@ -174,9 +175,12 @@ class Game:
 
         :return:
         """
-        st_map = ['Доска противника                   Ваша доска']
+        st_map = ['\nДоска противника                   Ваша доска']
         for a, u in zip(ai_board, user_board):
             st_map.append(f'{"".join(a)}       {"".join(u)}')
 
-        print('\n'.join(st_map))
+        if finish:
+            print('\n'.join(st_map).replace('X', chr(9632)))
+        else:
+            print('\n'.join(st_map))
         return True
