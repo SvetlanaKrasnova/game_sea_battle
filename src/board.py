@@ -1,10 +1,50 @@
-from src.ship import Ship
+from typing import Optional
 from src.dot import Dot
+from src.ship import Ship
 
 
 class Collor:
+    """
+    Это для раскраски текста для отображения
+    позиция кораблей на доске. Чтоб лучше видно было
+    """
     BOLD = '\033[1m'
     END = '\033[0m'
+
+
+class ResultShot:
+    """
+    Класс описывает ответ выстрела по доске
+    """
+
+    def __init__(self, index_ship: Optional[int] = None, repeat_move: bool = True, hit: bool = False):
+        """
+
+        :param index_ship: Индекс корабля с доски (self.ship)
+        :param repeat_move: Нужен ли повторный ход
+        """
+        self.repeat_move = repeat_move
+        self.index_ship = index_ship
+        self.hit = hit  # Попали или нет
+
+    @property
+    def index_ship(self):
+        return self._index_ship
+
+    @index_ship.setter
+    def index_ship(self, value: Optional[int]):
+        try:
+            # Всего 7 кораблей
+            if isinstance(value, bool):
+                raise ValueError
+            elif value is None:
+                self._index_ship = value
+            elif -1 < value < 7:
+                self._index_ship = value
+            else:
+                raise ValueError
+        except Exception as e:
+            raise ValueError('Некорректно указан индекс корабля')
 
 
 class Board:
@@ -12,6 +52,7 @@ class Board:
     Класс отрисовки доски с расположением всех
     кораблей
     """
+
     def __init__(self, hid: bool = False):
         self.ships = []  # Список всеx кораблей доски
         self.dots_ships = []  # Список всех точек с контурами
@@ -48,6 +89,20 @@ class Board:
             return True
         except Exception as e:
             raise 'Неудалось поставить корабль'
+
+    def check_hit(self, dot: Dot):
+        """
+        Метод проверяет, попали в корабль или нет
+        :param dot: точка выстрела
+        :return: None - если не попали
+                 index_ship - индекс корабля на доске, в который попали
+        """
+        index_ship = None
+        for ship in self.ships:
+            if dot in ship.ship_dots():
+                index_ship = self.ships.index(ship)
+
+        return index_ship
 
     def contour(self, ship: Ship):
         """
@@ -99,31 +154,28 @@ class Board:
 
         return contour_dots
 
-    def print_contour_kill_ship(self, x: int, y: int):
+    def print_contour_kill_ship(self, index_ship: int):
         """
-        Метод добавляет контур на точку убитого корабля
+        Метод добавляет контур убитого корабля
         Нужно для дальнейшего отображения на доске
-        :param x: строка
-        :param y: столбец
+        :param ship: объект корабля
         :return:
         """
-        dot = Dot(x, y)
-        for ship in self.ships:
-            if dot not in ship.ship_dots():
-                continue
-            if ship.ship_life == 0:
-                dots_contour = self.contour(ship)
-                for _d in dots_contour:
-                    self.shot(_d.x, _d.y)
-            break
+        if self.ships[index_ship].ship_life == 0:
+            dots_contour = self.contour(self.ships[index_ship])
+            for dot in dots_contour:
+                self.shot(dot.x, dot.y)
 
-        return True
+            return True
+
+        return False
 
     def out(self, dot: Dot):
         """
         Метод для точки (объекта класса Dot) возвращает
             True, если точка выходит за пределы поля, и
             False, если не выходит
+        :param dot: объект точки
         :return:
         """
         try:
@@ -132,7 +184,7 @@ class Board:
         except:
             return True
 
-    def shot(self, x: int, y: int):
+    def shot(self, x: int, y: int) -> ResultShot:
         """
         Метод делает выстрел по доске
         (если есть попытка выстрелить за пределы и в использованную точку,
@@ -144,25 +196,29 @@ class Board:
         try:
             if Dot(x, y) in self.user_move:
                 print('\nВ эту клетку выстрел уже был. Попробуйте ещё раз.')
-                return True
+                return ResultShot(repeat_move=True, hit=False)
             # Если выстрела в указанную точку ещё не было
             if self.board[x][y] == 'О':
                 # Если в этой клетки нет корабля - ставим T
                 self.board[x][y] = f'{Collor.BOLD}T{Collor.END}'
                 self.user_move.append(Dot(x, y))
-                return False
+                return ResultShot(repeat_move=False, hit=False)
             elif self.board[x][y] == chr(9632):
-                # Если попали на корабль - Сообщаем, что корабль подбит
+                # Если попали по кораблю - Сообщаем, что корабль подбит
                 self.board[x][y] = f'{Collor.BOLD}X{Collor.END}'
+                dot = Dot(x, y)
 
-                self.user_move.append(Dot(x, y))
+                # Запоминаем точку выстрела
+                self.user_move.append(dot)
 
-                return True
+                return ResultShot(repeat_move=True,
+                                  hit=True,
+                                  index_ship=self.check_hit(dot))
             else:
-                raise Exception
+                return ResultShot(repeat_move=True, hit=False)
         except Exception as e:
             print('\nВ указанную точку выстрелить нельзя. Попробуйте ещё раз')
-            return True
+            return ResultShot(repeat_move=True, hit=False)
 
     def take_life_ship(self, index_ship: int):
         """
@@ -189,7 +245,7 @@ class Board:
         :return:
         """
         header = ' | '.join([f'{Collor.BOLD}{index}{Collor.END}' for index in range(6)])
-        st_map = [f'   {header} |']
+        st_map = [f'     {header} |']
         if self.hid:
             for i, l in enumerate(self.board):
                 l = [i if i != chr(9632) else "О" for i in l]  # mask
