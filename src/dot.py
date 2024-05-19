@@ -1,3 +1,5 @@
+from exceptions.exceptions import BoardOutException
+
 class Dot:
     """
     Класс точек на поле.
@@ -28,7 +30,7 @@ class Dot:
     @x.setter
     def x(self, value: int):
         if value < 0:
-            raise ValueError('Некорректный параметр')
+            raise BoardOutException()
         self._x = value
 
     @property
@@ -38,5 +40,5 @@ class Dot:
     @y.setter
     def y(self, value: int):
         if value < 0:
-            raise ValueError('Некорректный параметр')
+            raise BoardOutException()
         self._y = value

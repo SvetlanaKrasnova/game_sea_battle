@@ -1,6 +1,7 @@
 from typing import Optional
 from src.dot import Dot
 from src.ship import Ship
+from exceptions.exceptions import BoardOutException, RepeatShotException
 
 
 class Collor:
@@ -121,8 +122,11 @@ class Board:
                     for _i in range(ship.ship_length + 2):
                         if y >= 0:
                             dot = Dot(x, y)
-                            if not self.out(dot):
-                                contour_dots.append(dot)
+                            try:
+                                if not self.out(dot):
+                                    contour_dots.append(dot)
+                            except:
+                                pass
                         y += 1
 
             y = ship.head_dot_ship.y + ship.ship_length
@@ -141,8 +145,11 @@ class Board:
                     for _i in range(ship.ship_length + 2):
                         if x >= 0:
                             dot = Dot(x, y)
-                            if not self.out(dot):
-                                contour_dots.append(dot)
+                            try:
+                                if not self.out(dot):
+                                    contour_dots.append(dot)
+                            except:
+                                pass
                         x += 1
 
             x = ship.head_dot_ship.x + ship.ship_length
@@ -164,7 +171,10 @@ class Board:
         if self.ships[index_ship].ship_life == 0:
             dots_contour = self.contour(self.ships[index_ship])
             for dot in dots_contour:
-                self.shot(dot.x, dot.y)
+                try:
+                    self.shot(dot.x, dot.y)
+                except:
+                    pass
 
             return True
 
@@ -173,7 +183,7 @@ class Board:
     def out(self, dot: Dot):
         """
         Метод для точки (объекта класса Dot) возвращает
-            True, если точка выходит за пределы поля, и
+            Exception, если точка выходит за пределы поля, и
             False, если не выходит
         :param dot: объект точки
         :return:
@@ -181,8 +191,8 @@ class Board:
         try:
             _check_dot = self.board[dot.x][dot.y]
             return False
-        except:
-            return True
+        except Exception as e:
+            raise BoardOutException()
 
     def shot(self, x: int, y: int) -> ResultShot:
         """
@@ -190,35 +200,40 @@ class Board:
         (если есть попытка выстрелить за пределы и в использованную точку,
         будет исключение).
         :return:
-                True - игроку требуется повторный ход
+                Exception - игроку требуется повторный ход
                 False - ход противника
         """
         try:
-            if Dot(x, y) in self.user_move:
-                print('\nВ эту клетку выстрел уже был. Попробуйте ещё раз.')
-                return ResultShot(repeat_move=True, hit=False)
-            # Если выстрела в указанную точку ещё не было
+            dot = Dot(x, y)
+
+            # Проверяем, в пределах доски ли сделан ход
+            self.out(dot)
+
+            if dot in self.user_move:
+                # Такой выстрел уже был
+                raise RepeatShotException()
+
             if self.board[x][y] == 'О':
-                # Если в этой клетки нет корабля - ставим T
+                # Если выстрела в указанную точку ещё не было - ставим T
                 self.board[x][y] = f'{Collor.BOLD}T{Collor.END}'
                 self.user_move.append(Dot(x, y))
                 return ResultShot(repeat_move=False, hit=False)
             elif self.board[x][y] == chr(9632):
                 # Если попали по кораблю - Сообщаем, что корабль подбит
                 self.board[x][y] = f'{Collor.BOLD}X{Collor.END}'
-                dot = Dot(x, y)
 
                 # Запоминаем точку выстрела
                 self.user_move.append(dot)
 
-                return ResultShot(repeat_move=True,
-                                  hit=True,
-                                  index_ship=self.check_hit(dot))
+                return ResultShot(repeat_move=True, # Нужен повторный ход
+                                  hit=True, # Попали по кораблю
+                                  index_ship=self.check_hit(dot)) # Какой именно это корабль
             else:
-                return ResultShot(repeat_move=True, hit=False)
+                raise Exception('Некорректный ход :(')
+
         except Exception as e:
-            print('\nВ указанную точку выстрелить нельзя. Попробуйте ещё раз')
-            return ResultShot(repeat_move=True, hit=False)
+            raise e
+
 
     def take_life_ship(self, index_ship: int):
         """

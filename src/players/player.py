@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from src.board import Board, ResultShot
+from exceptions.exceptions import BoardOutException
 
 
 class Player(ABC):
@@ -55,5 +56,8 @@ class User(Player):
         Для игрока, метод спрашивает координаты с консоли
         :return:
         """
-        x, y = str(input('\nКуда стреляем (строка, столбец)?: ')).strip().split(' ')
-        return int(x), int(y)
+        try:
+            x, y = str(input('\nКуда стреляем (строка, столбец)?: ')).strip().split(' ')
+            return int(x), int(y)
+        except Exception:
+            raise BoardOutException()

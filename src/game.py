@@ -128,9 +128,8 @@ class Game:
                     else:
                         self.current_player = 'user'
 
-            except MoveException as e:
-                # Некорректный ход (клетка занята или вышли за пределы карты)
-                raise e
+            except (BoardOutException, RepeatShotException) as e:
+                print(e.message)
             except Exception as e:
                 # Ошибки, которые не предусмотрели
                 raise e
