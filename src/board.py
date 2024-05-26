@@ -1,7 +1,7 @@
 from typing import Optional
 from src.dot import Dot
 from src.ship import Ship
-from exceptions.exceptions import BoardOutException, RepeatShotException
+from exceptions.exceptions import BoardOutException, RepeatShotException, BadShipException
 
 
 class Collor:
@@ -89,7 +89,7 @@ class Board:
             self.dots_ships.extend(self.contour(ship))
             return True
         except Exception as e:
-            raise 'Неудалось поставить корабль'
+            raise BadShipException(e)
 
     def check_hit(self, dot: Dot):
         """
@@ -122,11 +122,10 @@ class Board:
                     for _i in range(ship.ship_length + 2):
                         if y >= 0:
                             dot = Dot(x, y)
-                            try:
-                                if not self.out(dot):
-                                    contour_dots.append(dot)
-                            except:
-                                pass
+
+                            if not self.out(dot):
+                                contour_dots.append(dot)
+
                         y += 1
 
             y = ship.head_dot_ship.y + ship.ship_length
@@ -145,11 +144,10 @@ class Board:
                     for _i in range(ship.ship_length + 2):
                         if x >= 0:
                             dot = Dot(x, y)
-                            try:
-                                if not self.out(dot):
-                                    contour_dots.append(dot)
-                            except:
-                                pass
+
+                            if not self.out(dot):
+                                contour_dots.append(dot)
+
                         x += 1
 
             x = ship.head_dot_ship.x + ship.ship_length
@@ -183,7 +181,7 @@ class Board:
     def out(self, dot: Dot):
         """
         Метод для точки (объекта класса Dot) возвращает
-            Exception, если точка выходит за пределы поля, и
+            True, если точка выходит за пределы поля, и
             False, если не выходит
         :param dot: объект точки
         :return:
@@ -191,8 +189,8 @@ class Board:
         try:
             _check_dot = self.board[dot.x][dot.y]
             return False
-        except Exception as e:
-            raise BoardOutException()
+        except Exception:
+            return True
 
     def shot(self, x: int, y: int) -> ResultShot:
         """
@@ -207,7 +205,8 @@ class Board:
             dot = Dot(x, y)
 
             # Проверяем, в пределах доски ли сделан ход
-            self.out(dot)
+            if self.out(dot):
+                raise BoardOutException()
 
             if dot in self.user_move:
                 # Такой выстрел уже был

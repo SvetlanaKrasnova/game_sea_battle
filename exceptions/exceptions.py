@@ -1,20 +1,24 @@
-class AppException(Exception):
-    def __init__(self):
-        self.message = 'Недопустимый ход. Попробуйте ещё раз'
-
-
-class BoardOutException(AppException):
+class BoardOutException(Exception):
     """
     Игрок пытается выстрелить в клетку за пределами поля
     """
 
     def __init__(self):
-        super(BoardOutException, self).__init__()
         self.message = 'Некорректный ход. Пожалуйста, введите координаты в пределах доски (от 0 до 5).' \
                        '\nПример: "Куда стреляем (строка, столбец)?: 1 5"\n'
 
 
-class RepeatShotException(AppException):
+class BadShipException(Exception):
+    """
+    Возникает, если неудалось поставить корабль на доску
+    """
+
+    def __init__(self, ex):
+        self.exception = ex
+        self.message = 'Неудалось поставить корабль'
+
+
+class RepeatShotException(Exception):
     """
     Попытка сделать выстрел в клетку, куда уже стреляли
     """
