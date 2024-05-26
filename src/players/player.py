@@ -33,6 +33,8 @@ class Player(ABC):
 
         # Если выстрел успешный
         if result.hit:
+            print('Попал!')
+
             # Отнимаем жизнь у корабля
             self.enemy_s_board.take_life_ship(result.index_ship)
 
@@ -57,7 +59,7 @@ class User(Player):
         :return:
         """
         try:
-            x, y = str(input('\nКуда стреляем (строка, столбец)?: ')).strip().split(' ')
+            x, y = str(input('Куда стреляем (строка, столбец)?: ')).strip().split(' ')
             return int(x), int(y)
         except Exception:
             raise BoardOutException()

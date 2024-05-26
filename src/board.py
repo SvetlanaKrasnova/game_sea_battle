@@ -60,17 +60,8 @@ class Board:
         self.user_move = []  # Список всех выстрелов
         self.hid = hid  # Нужно ли скрывать корабль или нет (для вывода доски врага)
         self.col_life_ships = 7  # Количество живых кораблей на доске
-        self.board = self.get_board()
-
-    def get_board(self):
-        """
-        Метод создает двумерный список
-        :return:
-        """
-        game_board = []
-        for i in range(6):
-            game_board.append(['О' for _i in range(6)])
-        return game_board
+        # Двумерный список, в котором хранятся состояния каждой из клеток
+        self.board = [['О' for _i in range(6)] for _ in range(6)]
 
     def add_ship(self, ship: Ship):
         """
@@ -224,15 +215,14 @@ class Board:
                 # Запоминаем точку выстрела
                 self.user_move.append(dot)
 
-                return ResultShot(repeat_move=True, # Нужен повторный ход
-                                  hit=True, # Попали по кораблю
-                                  index_ship=self.check_hit(dot)) # Какой именно это корабль
+                return ResultShot(repeat_move=True,  # Нужен повторный ход
+                                  hit=True,  # Попали по кораблю
+                                  index_ship=self.check_hit(dot))  # Какой именно это корабль
             else:
                 raise Exception('Некорректный ход :(')
 
         except Exception as e:
             raise e
-
 
     def take_life_ship(self, index_ship: int):
         """

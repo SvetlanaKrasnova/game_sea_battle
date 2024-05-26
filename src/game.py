@@ -11,9 +11,18 @@ class Game:
     """
     Основная логика игры
     """
-    user = User()
-    ai = AI()
-    current_player = 'user'  # Чей ход (user|ai)
+    def __init__(self):
+        self.user = User() # Игрок-пользователь
+        self.ai = AI() # Игрок-компьютер
+        self.current_player = 'user'  # Чей ход (user|ai)
+
+        # Формируем доски
+        self.user.own_board = self.random_board()
+        self.ai.own_board = self.random_board(hid=True)
+
+        # Добавлем cсылки на доски противника
+        self.user.enemy_s_board = self.ai.own_board
+        self.ai.enemy_s_board = self.user.own_board
 
     def start(self):
         """
@@ -68,6 +77,7 @@ class Game:
                         ship_sailed = True
                         break
                     except:
+                        # Ничего не предпринимаем
                         pass
 
                 if not ship_sailed:
@@ -87,13 +97,14 @@ class Game:
         print('*' * 30)
         print('ИГРА МОРСКОЙ БОЙ')
         print('*' * 30)
+        print('Приветствую вас!')
+        print('Вы стреляете по доске противника. AI, ваш противник, по вашей.\n')
         print('Пример ввода')
         print('Необходимо вводить индексы строк и столбцов через пробел'
               '\nот 0 до 5 включительно:')
         print('\t"Куда стреляем (строка, столбец)?: 2 5"')
         print('\t"Куда стреляем (строка, столбец)?: 5 3"\n')
-        print('Вы стреляете по доске противника. AI - ваш противник, по вашей.\n'
-              'Удачи!\n')
+        print('Удачи!\n')
         print("СТАРТ ИГРЫ!\n")
 
         return True
@@ -103,20 +114,11 @@ class Game:
         Метод с игровым циклом
         :return:
         """
-
-        # Формируем доски
-        self.user.own_board = self.random_board()
-        self.ai.own_board = self.random_board(hid=True)
-
-        # Добавлем cсылки на доски противника
-        self.user.enemy_s_board = self.ai.own_board
-        self.ai.enemy_s_board = self.user.own_board
+        self.print_board(user_board=self.user.own_board.current_game_board(),
+                         ai_board=self.ai.own_board.current_game_board())
 
         while True:
             try:
-                self.print_board(user_board=self.user.own_board.current_game_board(),
-                                 ai_board=self.ai.own_board.current_game_board())
-
                 if self.current_player == 'user':
                     if self.user.move().repeat_move:
                         self.current_player = 'user'
@@ -127,6 +129,9 @@ class Game:
                         self.current_player = 'ai'
                     else:
                         self.current_player = 'user'
+
+                self.print_board(user_board=self.user.own_board.current_game_board(),
+                                 ai_board=self.ai.own_board.current_game_board())
 
             except (BoardOutException, RepeatShotException) as e:
                 print(e.message)
@@ -182,5 +187,5 @@ class Game:
         if finish:
             print('\n'.join(st_map).replace('X', chr(9632)))
         else:
-            print('\n'.join(st_map))
+            print('\n'.join(st_map) + '\n')
         return True
