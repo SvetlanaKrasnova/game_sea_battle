@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 from .player import Player
 from src.dot import Dot
-from exceptions.exceptions import BoardOutException, RepeatShotException
+from exceptions.exceptions import BoardOutException, RepeatShotException, NotFreeCellAIException
 
 class AI(Player):
     """
@@ -12,9 +12,14 @@ class AI(Player):
 
     def __init__(self):
         super(AI, self).__init__()
-        self._last_hit: Optional[Dot] = None
+        self._last_hit: Optional[Dot] = None # Последня ячейка с попаданием в какой-нибудь корабль
 
-    def neighbors(self, index: int):
+    def neighbors(self, index: int) -> list:
+        """
+        Метод возвращает число стоящее перед index и после него
+        :param index: число от которого считаем
+        :return:
+        """
         return [index + 1, index - 1]
 
     def _generation_cell(self) -> list:
@@ -23,7 +28,7 @@ class AI(Player):
         Например:
             Точка старта 1,4
             Результат метода 1,3 1,5 0,4 2,4
-        :return:
+        :return: list[Dot]
         """
         dots = [[x, y] for x, y in zip(self.neighbors(self._last_hit.x), [self._last_hit.y] * 2)]
         dots.extend([[x, y] for x, y in zip([self._last_hit.x] * 2, self.neighbors(self._last_hit.y))])
@@ -35,11 +40,11 @@ class AI(Player):
             try:
                 _dot = Dot(_d[0], _d[1])
 
-                # Если не выходит за границу
+                # Если выходит за границу - не берем
                 if self.enemy_s_board.out(_dot):
                     raise BoardOutException()
 
-                # Если не стреляли в клетку
+                # Если стреляли в клетку - не берем
                 if _dot in self.enemy_s_board.user_move:
                     raise RepeatShotException()
             except:
@@ -49,9 +54,16 @@ class AI(Player):
 
         return free_dots
 
-    def _random_cell(self):
+    def _random_cell(self) -> Dot:
+        """
+        Метод генерирует случайную клетку.
+        На определение свободной клетки даётся 2 секунды.
+        Если за это время выбор будет попадать на уже занятые клетки
+         - то вернется ошибка
+        :return: Dot
+        """
         start_time = datetime.now()
-        while int((datetime.now() - start_time).total_seconds()) <= 3:
+        while int((datetime.now() - start_time).total_seconds()) <= 2:
             x = random.randrange(5)
             y = random.randrange(5)
             if Dot(x, y) in self.enemy_s_board.user_move:
@@ -63,25 +75,30 @@ class AI(Player):
 
     def get_first_free_cell(self):
         """
-        Метод возвращает первую свободную ячейка
-        :return:
+        Метод возвращает первую ячейка сверху по которой AI ещё не стрелял
+        :return: Dot
         """
+        # 1. Оставляем только те клетки, по которым мы ещё не стреляли
+
         for i, l in enumerate(self.enemy_s_board.board):
             for k, j in enumerate(l):
-                if self.enemy_s_board.board[i][k] == 'О':
+                if not Dot(i, k) in self.enemy_s_board.user_move:
                     return Dot(i, k)
+
+        # На всякий случай. Пустоту возвращать - такой себе вариант
+        raise NotFreeCellAIException()
 
     def ask(self):
         """
-        Метод выбирает случайную свободную клетку
-        :return:
+        Метод по выбору свободной клетки
+        :return: x: int, y: int
         """
         # Если попадания не было - выбираем случайную клетку
         if not self._last_hit:
             try:
                 dot = self._random_cell()
             except TimeoutError:
-                # Первую свободную ячейку
+                # Первую ячейку по которой ещё не стреляли
                 dot = self.get_first_free_cell()
         else:
             # Если попали - берем 4 соседние клетки
@@ -97,15 +114,16 @@ class AI(Player):
                     if not dot in self.enemy_s_board.user_move:
                         break
             else:
-                # Это, корабль из 1 клетки
+                # Если свободных ячеек рядом нет - сбрасываем значение
+                # И выбираем случайную клетку
                 self._last_hit = None
                 try:
                     dot = self._random_cell()
                 except TimeoutError:
-                    # Первую свободную ячейку
+                    # Первую ячейку по которой ещё не стреляли
                     dot = self.get_first_free_cell()
 
-        # Если попали - меняем значение последнего выстрела
+        # Если попали - меняем значение последнего успешного выстрела
         if self.enemy_s_board.board[dot.x][dot.y].__contains__(chr(9632)):
             self._last_hit = dot # Обновляем клетку выстрела
 

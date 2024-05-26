@@ -26,3 +26,14 @@ class RepeatShotException(Exception):
     def __init__(self):
         super(RepeatShotException, self).__init__()
         self.message = 'В эту клетку выстрел уже был. Попробуйте ещё раз.'
+
+
+class NotFreeCellAIException(Exception):
+    """
+    Игра ещё идет, но у AI не осталось клеток.
+    """
+
+    def __init__(self):
+        super(NotFreeCellAIException, self).__init__()
+        self.message = 'Ошибка AI: Что-то совсем пошло не так. Не осталось свободных ячеек.\n' \
+                       'Попробуйте сыграть ещё раз.'

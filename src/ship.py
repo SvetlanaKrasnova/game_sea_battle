@@ -38,9 +38,9 @@ class Ship:
             raise ValueError('Некорректный параметр. Нужно указать положение "vertical" или "horizontal"')
         self._line_ship = value
 
-    def ship_dots(self):
+    def dots(self) -> list:
         """
-        Метод возвращает точки корабля
+        Метод возвращает все точки корабля
         :return: list
         """
         ship = []
@@ -54,10 +54,3 @@ class Ship:
             for i in range(self.ship_length):
                 ship.append(Dot(self.head_dot_ship.x, self.head_dot_ship.y + i))
         return ship
-
-    def dots(self):
-        """
-        Возвращает все точки корабля
-        :return:
-        """
-        return self.ship_dots

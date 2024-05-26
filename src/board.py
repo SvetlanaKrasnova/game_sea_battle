@@ -7,7 +7,7 @@ from exceptions.exceptions import BoardOutException, RepeatShotException, BadShi
 class Collor:
     """
     Это для раскраски текста для отображения
-    позиция кораблей на доске. Чтоб лучше видно было
+    позиций кораблей на доске. Чтоб лучше видно было
     """
     BOLD = '\033[1m'
     END = '\033[0m'
@@ -21,7 +21,7 @@ class ResultShot:
     def __init__(self, index_ship: Optional[int] = None, repeat_move: bool = True, hit: bool = False):
         """
 
-        :param index_ship: Индекс корабля с доски (self.ship)
+        :param index_ship: Индекс корабля с доски (Board.ships.index(ship))
         :param repeat_move: Нужен ли повторный ход
         """
         self.repeat_move = repeat_move
@@ -69,7 +69,7 @@ class Board:
         :return:
         """
         try:
-            for dot in ship.ship_dots():
+            for dot in ship.dots():
                 self.board[dot.x][dot.y] = chr(9632)  # ■
                 self.dots_ships.append(dot)
 
@@ -84,14 +84,15 @@ class Board:
 
     def check_hit(self, dot: Dot):
         """
-        Метод проверяет, попали в корабль или нет
+        Метод по точке определяет какой это корабль.
+        Если никакой - вернет None
         :param dot: точка выстрела
         :return: None - если не попали
                  index_ship - индекс корабля на доске, в который попали
         """
         index_ship = None
         for ship in self.ships:
-            if dot in ship.ship_dots():
+            if dot in ship.dots():
                 index_ship = self.ships.index(ship)
 
         return index_ship
@@ -101,7 +102,7 @@ class Board:
         Метод обводит корабль по контуру.
         Так как по ТЗ, корабли нужно ставить на расстоянии в 1 клетку
         :return: лист с точками контура корабля
-            [Dot, Dot, ...]
+                [Dot, Dot, ...]
         """
         contour_dots = []
         if ship.line_ship == 'horizontal':
@@ -154,15 +155,17 @@ class Board:
         """
         Метод добавляет контур убитого корабля
         Нужно для дальнейшего отображения на доске
-        :param ship: объект корабля
+        :param index_ship: индекс корабля из Board.ships
         :return:
+                True - точки убитого корабля были добавлены
+                False - у корабля ещё есть жизни (обводить не нужно)
         """
         if self.ships[index_ship].ship_life == 0:
-            dots_contour = self.contour(self.ships[index_ship])
-            for dot in dots_contour:
+            for dot in self.contour(self.ships[index_ship]):
                 try:
                     self.shot(dot.x, dot.y)
                 except:
+                    # Если в эту точку ранее стрелял пользователь, например
                     pass
 
             return True
@@ -171,11 +174,12 @@ class Board:
 
     def out(self, dot: Dot):
         """
-        Метод для точки (объекта класса Dot) возвращает
-            True, если точка выходит за пределы поля, и
-            False, если не выходит
+        Метод для точки (объекта класса Dot). Проверяет,
+        выходит ли точка за границы поля
         :param dot: объект точки
-        :return:
+        :return: возвращает
+                True, если точка выходит за пределы поля, и
+                False, если не выходит
         """
         try:
             _check_dot = self.board[dot.x][dot.y]
@@ -189,8 +193,9 @@ class Board:
         (если есть попытка выстрелить за пределы и в использованную точку,
         будет исключение).
         :return:
-                Exception - игроку требуется повторный ход
-                False - ход противника
+                BoardOutException - ход за пределы доски
+                RepeatShotException - такой выстрел уже был
+                ResultShot - результат выстрела
         """
         try:
             dot = Dot(x, y)
@@ -234,7 +239,7 @@ class Board:
 
         return True
 
-    def current_game_board(self):
+    def current_game_board(self) -> list:
         """
         Метод возвращает текущую карту
         Формат:

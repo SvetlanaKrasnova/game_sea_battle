@@ -32,7 +32,7 @@ class Game:
         self._greet()
         self.loop()
 
-    def random_board(self, hid: bool = False):
+    def random_board(self, hid: bool = False) -> Board:
         """
         Метод генерирует случайную доску.
         (в бесконечном цикле пытаемся поставить корабль в случайную доску,
@@ -65,11 +65,11 @@ class Game:
                                     ship_length=ship_lenght)
 
                         # Если точки корабля выходят за границу - пропускаем его
-                        if [True for dot in ship.ship_dots() if game_board.out(dot)].__len__() != 0:
+                        if [True for dot in ship.dots() if game_board.out(dot)].__len__() != 0:
                             continue
 
                         # Если точки корабля пересекаются с уже имеющимеся кораблями - пропускаем его
-                        if [True for dot in ship.ship_dots() if dot in game_board.dots_ships].__len__() != 0:
+                        if [True for dot in ship.dots() if dot in game_board.dots_ships].__len__() != 0:
                             continue
 
                         # Если никого нет, ставим корабль на доску
@@ -135,7 +135,7 @@ class Game:
 
             except (BoardOutException, RepeatShotException) as e:
                 print(e.message)
-            except Exception as e:
+            except (Exception, NotFreeCellAIException) as e:
                 # Ошибки, которые не предусмотрели
                 raise e
             else:
@@ -143,7 +143,7 @@ class Game:
                 if self._finish():
                     break
 
-        self.ai.own_board.hid = False
+        self.ai.own_board.hid = False # Делаем доску AI видимой (наша видна нам по умолчанию)
         self.print_board(user_board=self.user.own_board.current_game_board(),
                          ai_board=self.ai.own_board.current_game_board(),
                          finish=True)
@@ -153,8 +153,8 @@ class Game:
         """
         Метод проверяет, выиграл ли кто-то или нет
         :return:
-            True - выигрыш есть
-            False - игра продолжается
+                True - выигрыш есть
+                False - игра продолжается
         """
         if self.user.own_board.col_life_ships == 0:
             print('\nВы проиграли :(\nВ следующий раз точно повезет ;)')
